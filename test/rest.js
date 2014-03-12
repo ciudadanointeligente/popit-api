@@ -393,7 +393,19 @@ describe("REST", function () {
         if (err) {
           return done(err);
         }
-        doc.on('es-indexed', done);
+        doc.on('es-indexed', function(){
+          mongoose.model('Person').create({
+            _id: '12345',
+            id: '12345',
+            name: 'Iván',
+            email: '12345@example.org'
+          }, function(err, doc){
+            if (err) {
+              return done(err);
+            }
+            doc.on('es-indexed', done);
+          });
+        });
       });
     });
 
@@ -409,6 +421,20 @@ describe("REST", function () {
         has_more: false,
         result: [
           person({id: 'bby', name: 'Barnaby', email: 'barnaby@example.org'})
+        ]
+      }, done);
+    });
+
+    it.skip("returns a person even when the name has special chars", function(done) {
+      request.get('/api/search/persons?q=ivan')
+      .expect(200)
+      .expect({
+        total: 1,
+        page: 1,
+        per_page: 30,
+        has_more: false,
+        result: [
+          person({id: '12345', name: 'Iván', email: '12345@example.org'})
         ]
       }, done);
     });
